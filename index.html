@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ValdBot — Command Reference</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0d0f12;
+            --surface: #13161b;
+            --surface2: #1a1e25;
+            --border: #23282f;
+            --accent: #5b9cf6;
+            --accent2: #38d9a9;
+            --accent3: #f7a456;
+            --text: #e8eaed;
+            --muted: #6b7280;
+            --tag-bg: #1e2530;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Syne', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 48px 48px;
+            opacity: 0.35;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Glow blobs */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.08;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .blob-1 { width: 600px; height: 600px; background: var(--accent); top: -200px; left: -100px; }
+        .blob-2 { width: 500px; height: 500px; background: var(--accent2); bottom: -150px; right: -100px; }
+
+        /* Layout */
+        .wrap {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            position: relative;
+            z-index: 1;
+            padding: 80px 24px 64px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--tag-bg);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 4px 14px;
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            color: var(--accent);
+            letter-spacing: 0.08em;
+            margin-bottom: 28px;
+            opacity: 0;
+            animation: fadeUp 0.5s ease forwards 0.1s;
+        }
+
+        .badge::before {
+            content: '';
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--accent2);
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        h1 {
+            font-size: clamp(48px, 8vw, 80px);
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.03em;
+            opacity: 0;
+            animation: fadeUp 0.5s ease forwards 0.2s;
+        }
+
+        h1 span {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            margin-top: 16px;
+            font-size: 16px;
+            color: var(--muted);
+            font-weight: 400;
+            max-width: 480px;
+            line-height: 1.6;
+            opacity: 0;
+            animation: fadeUp 0.5s ease forwards 0.3s;
+        }
+
+        /* Mode legend */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 32px;
+            opacity: 0;
+            animation: fadeUp 0.5s ease forwards 0.4s;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 13px;
+        }
+
+        .legend-prefix {
+            font-family: 'DM Mono', monospace;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .plus  { color: var(--accent); }
+        .hash  { color: var(--accent2); }
+        .at    { color: var(--accent3); }
+
+        .legend-desc { color: var(--muted); font-size: 12px; }
+
+        /* Nav pills */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(13, 15, 18, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+        }
+
+        .nav-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            gap: 2px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding: 10px 0;
+        }
+
+        .nav-inner::-webkit-scrollbar { display: none; }
+
+        nav a {
+            white-space: nowrap;
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 6px;
+            transition: color 0.2s, background 0.2s;
+            letter-spacing: 0.02em;
+        }
+
+        nav a:hover { color: var(--text); background: var(--surface2); }
+        nav a.active { color: var(--accent); background: var(--tag-bg); }
+
+        /* Sections */
+        main { padding-bottom: 100px; }
+
+        section {
+            padding-top: 64px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        section.visible { opacity: 1; transform: none; }
+
+        .section-label {
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 6px;
+        }
+
+        h2 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 24px;
+        }
+
+        /* Command card */
+        .cmd-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .cmd-card:hover { border-color: #353c47; }
+
+        .cmd-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 20px 24px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .cmd-icon {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .icon-blue  { background: rgba(91,156,246,0.12); }
+        .icon-green { background: rgba(56,217,169,0.12); }
+        .icon-amber { background: rgba(247,164,86,0.12); }
+        .icon-red   { background: rgba(251,113,133,0.12); }
+        .icon-purple { background: rgba(167,139,250,0.12); }
+        .icon-teal  { background: rgba(45,212,191,0.12); }
+
+        .cmd-meta { flex: 1; min-width: 0; }
+
+        .cmd-name {
+            font-family: 'DM Mono', monospace;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .cmd-tagline {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.4;
+        }
+
+        .cmd-toggle {
+            width: 24px; height: 24px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--muted);
+            font-size: 18px;
+            transition: transform 0.25s ease, color 0.2s;
+            flex-shrink: 0;
+            margin-top: 6px;
+        }
+
+        .cmd-card.open .cmd-toggle { transform: rotate(45deg); color: var(--accent); }
+
+        .cmd-body {
+            display: none;
+            padding: 0 24px 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .cmd-card.open .cmd-body { display: block; }
+
+        .cmd-body p {
+            font-size: 14px;
+            color: var(--muted);
+            line-height: 1.7;
+            margin-top: 16px;
+            margin-bottom: 16px;
+        }
+
+        /* Syntax rows */
+        .syntax-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .syntax-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .syntax-tag {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            flex-shrink: 0;
+            min-width: 68px;
+            text-align: center;
+        }
+
+        .tag-user    { background: rgba(91,156,246,0.15); color: var(--accent); }
+        .tag-mention { background: rgba(247,164,86,0.15); color: var(--accent3); }
+        .tag-stream  { background: rgba(56,217,169,0.15); color: var(--accent2); }
+
+        .syntax-code {
+            font-family: 'DM Mono', monospace;
+            font-size: 13px;
+            color: var(--text);
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 5px 12px;
+        }
+
+        .syntax-code .opt { color: var(--muted); font-style: italic; }
+        .syntax-code .prefix-plus  { color: var(--accent); }
+        .syntax-code .prefix-hash  { color: var(--accent2); }
+
+        /* Example output */
+        .output-label {
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .output-box {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent2);
+            border-radius: 0 8px 8px 0;
+            padding: 12px 16px;
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            color: #a8b4c2;
+            line-height: 1.6;
+            word-break: break-word;
+        }
+
+        .output-box .highlight { color: var(--text); }
+
+        /* Notes */
+        .note {
+            display: flex;
+            gap: 10px;
+            background: rgba(91,156,246,0.06);
+            border: 1px solid rgba(91,156,246,0.15);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 16px;
+            font-size: 13px;
+            color: #8ba4cc;
+            line-height: 1.6;
+        }
+
+        .note-icon { flex-shrink: 0; font-size: 14px; }
+
+        /* Divider */
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 48px 0 0;
+        }
+
+        /* Footer */
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 32px 24px;
+            text-align: center;
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: none; }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            h1 { font-size: 42px; }
+            .cmd-header { gap: 12px; padding: 16px; }
+            .cmd-body { padding: 0 16px 20px; }
+            .syntax-row { gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<header>
+    <div class="badge">valdbot · command reference</div>
+    <h1><span>Commands</span></h1>
+    <p class="subtitle">A Twitch chat bot for MCSR Ranked stats. Use these commands in any channel where ValdBot is active.</p>
+
+    <div class="legend">
+        <div class="legend-item">
+            <span class="legend-prefix plus">+cmd</span>
+            <span class="legend-desc">Your own stats (or explicit IGN)</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-prefix plus">+cmd <span class="at">@user</span></span>
+            <span class="legend-desc">Mentioned user's linked account</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-prefix hash">#cmd</span>
+            <span class="legend-desc">Streamer's linked account</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-prefix" style="color:var(--muted)">season:N</span>
+            <span class="legend-desc">Filter by season number</span>
+        </div>
+    </div>
+</header>
+
+<nav>
+    <div class="nav-inner">
+        <a href="#stats">Stats</a>
+        <a href="#records">Records</a>
+        <a href="#analysis">Analysis</a>
+        <a href="#account">Account</a>
+        <a href="#channel">Channel</a>
+    </div>
+</nav>
+
+<main>
+<div class="wrap">
+
+<!-- STATS -->
+<section id="stats">
+    <div class="section-label">01 · Stats</div>
+    <h2>Player Stats</h2>
+
+    <!-- ELO -->
+    <div class="cmd-card" data-cmd>
+        <div class="cmd-header">
+            <div class="cmd-icon icon-blue">📊</div>
+            <div class="cmd-meta">
+                <div class="cmd-name">+elo &nbsp;#elo &nbsp;+elo @user</div>
+                <div class="cmd-tagline">Current elo, rank, W/L, PB, and average</div>
+            </div>
+            <div class="cmd-toggle">+</div>
+        </div>
+        <div class="cmd-body">
+            <p>Shows a full snapshot of a player's ranked stats for the current season, including elo rating, peak, rank tier, placement, win/loss record, winrate, matches played, personal best, average completion time, and phase points.</p>
+            <div class="syntax-grid">
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-user">You</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>elo <span class="opt">[IGN] [season:N]</span></span>
+                </div>
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-mention">Mention</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>elo @username <span class="opt">[season:N]</span></span>
+                </div>
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-stream">Streamer</span>
+                    <span class="syntax-code"><span class="prefix-hash">#</span>elo <span class="opt">[season:N]</span></span>
+                </div>
+            </div>
+            <div class="output-label">Example output</div>
+            <div class="output-box"><span class="highlight">ValdarenMC</span> Elo: 1482 (1531 Peak) ❚ Emerald III (#214) ❚ W/L: 312/278 (52.9%) ❚ Matches: 601 Played ❚ Pb: 5:47 Average: 9:14 ❚ Phase Points: 88</div>
+            <div class="note"><span class="note-icon">💡</span> Phase Points only appear for Season 6 and later. Past seasons are supported via <code>season:N</code>.</div>
+        </div>
+    </div>
+
+    <!-- TODAY -->
+    <div class="cmd-card" data-cmd>
+        <div class="cmd-header">
+            <div class="cmd-icon icon-green">🕐</div>
+            <div class="cmd-meta">
+                <div class="cmd-name">+today &nbsp;#today &nbsp;+today @user</div>
+                <div class="cmd-tagline">Stats from the last 12 hours of play</div>
+            </div>
+            <div class="cmd-toggle">+</div>
+        </div>
+        <div class="cmd-body">
+            <p>Returns a summary of a player's ranked matches played in the last 12 hours — current elo with net change, win/loss, winrate, and average completion time for that session.</p>
+            <div class="syntax-grid">
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-user">You</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>today <span class="opt">[IGN]</span></span>
+                </div>
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-mention">Mention</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>today @username</span>
+                </div>
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-stream">Streamer</span>
+                    <span class="syntax-code"><span class="prefix-hash">#</span>today</span>
+                </div>
+            </div>
+            <div class="output-label">Example output</div>
+            <div class="output-box"><span class="highlight">ValdarenMC</span> 12hr Ranked Stats ❚ Elo: 1482 (+14) ❚ W/L: 8/5 (61.5%) ❚ Average: 9:09</div>
+        </div>
+    </div>
+</section>
+
+<hr class="divider">
+
+<!-- RECORDS -->
+<section id="records">
+    <div class="section-label">02 · Records</div>
+    <h2>Head-to-Head</h2>
+
+    <!-- RECORD -->
+    <div class="cmd-card" data-cmd>
+        <div class="cmd-header">
+            <div class="cmd-icon icon-amber">⚔️</div>
+            <div class="cmd-meta">
+                <div class="cmd-name">+record &nbsp;#record &nbsp;+record @user</div>
+                <div class="cmd-tagline">Win/loss record between two players</div>
+            </div>
+            <div class="cmd-toggle">+</div>
+        </div>
+        <div class="cmd-body">
+            <p>Shows the head-to-head ranked record between two players this season. The first player defaults to your linked account (or the streamer's in <code>#</code> mode). The opponent can be a plain IGN or an <code>@mention</code>. Both can also be given explicitly.</p>
+            <div class="syntax-grid">
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-user">You</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>record &lt;IGN2&gt; <span class="opt">[season:N]</span></span>
+                </div>
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-user">Explicit</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>record &lt;IGN1&gt; &lt;IGN2&gt; <span class="opt">[season:N]</span></span>
+                </div>
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-mention">Mention</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>record @user1 @user2 <span class="opt">[season:N]</span></span>
+                </div>
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-stream">Streamer</span>
+                    <span class="syntax-code"><span class="prefix-hash">#</span>record &lt;IGN&gt; <span class="opt">[season:N]</span></span>
+                </div>
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-stream">Streamer</span>
+                    <span class="syntax-code"><span class="prefix-hash">#</span>record @user <span class="opt">[season:N]</span></span>
+                </div>
+            </div>
+            <div class="output-label">Example output</div>
+            <div class="output-box"><span class="highlight">ValdarenMC</span> 1-0 <span class="highlight">czelco</span> ❚ 1 total game played this season</div>
+        </div>
+    </div>
+</section>
+
+<hr class="divider">
+
+<!-- ANALYSIS -->
+<section id="analysis">
+    <div class="section-label">03 · Analysis</div>
+    <h2>Deep Stats</h2>
+
+    <!-- AVERAGE -->
+    <div class="cmd-card" data-cmd>
+        <div class="cmd-header">
+            <div class="cmd-icon icon-teal">⏱️</div>
+            <div class="cmd-meta">
+                <div class="cmd-name">+average &nbsp;#average &nbsp;+average @user</div>
+                <div class="cmd-tagline">Average completion time broken down by seed and bastion type</div>
+            </div>
+            <div class="cmd-toggle">+</div>
+        </div>
+        <div class="cmd-body">
+            <p>Shows overall average completion time plus per-seed averages (Village, RP, BT, Ship, Temple) and per-bastion averages (Bridge, Treasure, Housing, Stables). Only counts completed (non-forfeited) wins.</p>
+            <div class="syntax-grid">
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-user">You</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>average <span class="opt">[IGN] [season:N]</span></span>
+                </div>
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-mention">Mention</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>average @username <span class="opt">[season:N]</span></span>
+                </div>
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-stream">Streamer</span>
+                    <span class="syntax-code"><span class="prefix-hash">#</span>average <span class="opt">[season:N]</span></span>
+                </div>
+            </div>
+            <div class="output-label">Example output</div>
+            <div class="output-box"><span class="highlight">ValdarenMC</span>'s overall average: 9:14 (312 completions) ❚ Village: 9:08 ⋮ RP: 9:19 ⋮ BT: 9:11 ⋮ Ship: 9:22 ⋮ Temple: 9:31 ❚ Bridge: 9:12 ⋮ Treasure: 9:09 ⋮ Housing: 9:17 ⋮ Stables: 9:21</div>
+        </div>
+    </div>
+
+    <!-- WINRATE -->
+    <div class="cmd-card" data-cmd>
+        <div class="cmd-header">
+            <div class="cmd-icon icon-blue">📈</div>
+            <div class="cmd-meta">
+                <div class="cmd-name">+winrate &nbsp;#winrate &nbsp;+winrate @user</div>
+                <div class="cmd-tagline">Winrate broken down by seed and bastion type</div>
+            </div>
+            <div class="cmd-toggle">+</div>
+        </div>
+        <div class="cmd-body">
+            <p>Shows overall winrate plus per-seed and per-bastion winrates. Draws are excluded from the winrate calculation.</p>
+            <div class="syntax-grid">
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-user">You</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>winrate <span class="opt">[IGN] [season:N]</span></span>
+                </div>
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-mention">Mention</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>winrate @username <span class="opt">[season:N]</span></span>
+                </div>
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-stream">Streamer</span>
+                    <span class="syntax-code"><span class="prefix-hash">#</span>winrate <span class="opt">[season:N]</span></span>
+                </div>
+            </div>
+            <div class="output-label">Example output</div>
+            <div class="output-box"><span class="highlight">ValdarenMC</span>'s overall winrate: 52.9% (590 matches) ❚ Village: 55.1% ⋮ RP: 51.3% ⋮ BT: 54.8% ⋮ Ship: 48.6% ⋮ Temple: 50.0% ❚ Bridge: 53.4% ⋮ Treasure: 56.2% ⋮ Housing: 49.1% ⋮ Stables: 51.7%</div>
+        </div>
+    </div>
+
+    <!-- LAST -->
+    <div class="cmd-card" data-cmd>
+        <div class="cmd-header">
+            <div class="cmd-icon icon-purple">🔁</div>
+            <div class="cmd-meta">
+                <div class="cmd-name">+last &nbsp;#last &nbsp;+last @user</div>
+                <div class="cmd-tagline">Average and winrate for the last N games</div>
+            </div>
+            <div class="cmd-toggle">+</div>
+        </div>
+        <div class="cmd-body">
+            <p>Shows average time and winrate (combined per seed and bastion) for the most recent N ranked matches. Useful for seeing recent form rather than season-wide stats.</p>
+            <div class="syntax-grid">
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-user">You</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>last <span class="opt">[IGN]</span> &lt;quantity&gt; <span class="opt">[season:N]</span></span>
+                </div>
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-mention">Mention</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>last @username &lt;quantity&gt; <span class="opt">[season:N]</span></span>
+                </div>
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-stream">Streamer</span>
+                    <span class="syntax-code"><span class="prefix-hash">#</span>last &lt;quantity&gt; <span class="opt">[season:N]</span></span>
+                </div>
+            </div>
+            <div class="output-label">Example output — <code>+last 50</code></div>
+            <div class="output-box"><span class="highlight">ValdarenMC</span>'s last 50 games: Overall: 9:11 (55.1%) ❚ Village: 9:05 (57.9%) ⋮ RP: 9:14 (52.0%) ⋮ BT: 9:09 (56.3%) ⋮ Ship: 9:24 (50.0%) ⋮ Temple: 9:28 (48.1%) ❚ Bridge: 9:10 (54.2%) ⋮ Treasure: 9:07 (58.3%) ⋮ Housing: 9:16 (51.5%) ⋮ Stables: 9:19 (53.8%)</div>
+            <div class="note"><span class="note-icon">💡</span> Quantity is required. If no IGN is given, your linked account is used.</div>
+        </div>
+    </div>
+
+    <!-- FF -->
+    <div class="cmd-card" data-cmd>
+        <div class="cmd-header">
+            <div class="cmd-icon icon-red">🏳️</div>
+            <div class="cmd-meta">
+                <div class="cmd-name">+ff &nbsp;#ff &nbsp;+ff @user</div>
+                <div class="cmd-tagline">Forfeit count and rate for the season</div>
+            </div>
+            <div class="cmd-toggle">+</div>
+        </div>
+        <div class="cmd-body">
+            <p>Shows how many times a player has forfeited this season and what percentage of their total matches that represents.</p>
+            <div class="syntax-grid">
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-user">You</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>ff <span class="opt">[IGN] [season:N]</span></span>
+                </div>
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-mention">Mention</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>ff @username <span class="opt">[season:N]</span></span>
+                </div>
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-stream">Streamer</span>
+                    <span class="syntax-code"><span class="prefix-hash">#</span>ff <span class="opt">[season:N]</span></span>
+                </div>
+            </div>
+            <div class="output-label">Example output</div>
+            <div class="output-box"><span class="highlight">ValdarenMC</span> has forfeited 42 (7.0% of matches) times this season</div>
+        </div>
+    </div>
+</section>
+
+<hr class="divider">
+
+<!-- ACCOUNT -->
+<section id="account">
+    <div class="section-label">04 · Account</div>
+    <h2>Linking Your Account</h2>
+
+    <div class="cmd-card" data-cmd>
+        <div class="cmd-header">
+            <div class="cmd-icon icon-green">🔗</div>
+            <div class="cmd-meta">
+                <div class="cmd-name">+link</div>
+                <div class="cmd-tagline">Link your Twitch account to a Minecraft IGN</div>
+            </div>
+            <div class="cmd-toggle">+</div>
+        </div>
+        <div class="cmd-body">
+            <p>Links your Twitch username to a Minecraft IGN. Once linked, you can use commands without providing your IGN every time — just <code>+elo</code>, <code>+today</code>, etc. The bot verifies the IGN exists via Mojang before saving it.</p>
+            <div class="syntax-grid">
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-user">You</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>link &lt;IGN&gt;</span>
+                </div>
+            </div>
+            <div class="output-label">Example</div>
+            <div class="output-box"><span class="highlight">+link ValdarenMC</span> → Account successfully linked to ValdarenMC!</div>
+            <div class="note"><span class="note-icon">💡</span> Your IGN is stored with the correct casing from Mojang. Mention mode (<code>+cmd @user</code>) requires the mentioned user to have linked their account first.</div>
+        </div>
+    </div>
+</section>
+
+<hr class="divider">
+
+<!-- CHANNEL -->
+<section id="channel">
+    <div class="section-label">05 · Channel</div>
+    <h2>Bot Management</h2>
+
+    <div class="cmd-card" data-cmd>
+        <div class="cmd-header">
+            <div class="cmd-icon icon-blue">➕</div>
+            <div class="cmd-meta">
+                <div class="cmd-name">+join</div>
+                <div class="cmd-tagline">Invite ValdBot to your channel</div>
+            </div>
+            <div class="cmd-toggle">+</div>
+        </div>
+        <div class="cmd-body">
+            <p>Makes ValdBot join your Twitch channel so viewers can use all commands there. Run this command from any channel where ValdBot is already active.</p>
+            <div class="syntax-grid">
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-user">You</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>join</span>
+                </div>
+            </div>
+            <div class="output-label">Response</div>
+            <div class="output-box">Joined your channel!</div>
+        </div>
+    </div>
+
+    <div class="cmd-card" data-cmd>
+        <div class="cmd-header">
+            <div class="cmd-icon icon-red">➖</div>
+            <div class="cmd-meta">
+                <div class="cmd-name">+leave</div>
+                <div class="cmd-tagline">Remove ValdBot from your channel</div>
+            </div>
+            <div class="cmd-toggle">+</div>
+        </div>
+        <div class="cmd-body">
+            <p>Makes ValdBot leave your channel. You can re-add it at any time with <code>+join</code>.</p>
+            <div class="syntax-grid">
+                <div class="syntax-row">
+                    <span class="syntax-tag tag-user">You</span>
+                    <span class="syntax-code"><span class="prefix-plus">+</span>leave</span>
+                </div>
+            </div>
+            <div class="output-label">Response</div>
+            <div class="output-box">Left your channel.</div>
+        </div>
+    </div>
+</section>
+
+</div>
+</main>
+
+<footer>
+    ValdBot · built for MCSR Ranked · powered by mcsrranked.com
+</footer>
+
+<script>
+    // Accordion
+    document.querySelectorAll('[data-cmd]').forEach(card => {
+        card.querySelector('.cmd-header').addEventListener('click', () => {
+            card.classList.toggle('open');
+        });
+    });
+
+    // Open first card in each section by default
+    document.querySelectorAll('section').forEach(section => {
+        const first = section.querySelector('[data-cmd]');
+        if (first) first.classList.add('open');
+    });
+
+    // Scroll reveal
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.05 });
+    document.querySelectorAll('section').forEach(s => observer.observe(s));
+
+    // Active nav
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('nav a');
+    const navObserver = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id));
+            }
+        });
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    sections.forEach(s => navObserver.observe(s));
+</script>
+</body>
+</html>
